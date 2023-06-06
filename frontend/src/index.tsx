@@ -27,7 +27,7 @@ const router = createBrowserRouter([
     },
     {
         path: "/payment/:id",
-        element: <Protected redirectTo={'/admin'}><Payment/></Protected>
+        element: <Protected redirectTo={window.location.pathname}><Payment/></Protected>
     },
     {
         path: "/admin",
