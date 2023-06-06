@@ -39,6 +39,7 @@ class SecurityConfig {
             it
                 .requestMatchers(HttpMethod.OPTIONS).permitAll()
                 .requestMatchers(HttpMethod.GET).hasAnyRole(Role.ADMIN.name, Role.USER.name)
+                .requestMatchers("/api/payform/**").hasAnyRole(Role.ADMIN.name, Role.USER.name)
                 .anyRequest().hasRole(Role.ADMIN.name)
         }
         .httpBasic {

@@ -34,6 +34,7 @@ export const Invoice: React.FC<InvoiceProps> = (props) => (
     }}>
         <div style={{
             display: "flex",
+            flexDirection: 'column',
             flexGrow: '1'
         }}>
             {props.title}

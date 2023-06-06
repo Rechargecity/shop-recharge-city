@@ -39,7 +39,6 @@ class UserDetailsServiceImpl(
     }
 
     private fun register(username: String, password: String, roles: Set<String>) {
-        if (userRepository.existsById(username)) throw IllegalArgumentException("User with username $username already exists")
         userRepository.save(
             UserEntity(
                 username,
@@ -53,5 +52,8 @@ class UserDetailsServiceImpl(
         ?.toModel()
         ?: throw UsernameNotFoundException("User not found by username $username")
 
-    fun register(username: String, password: String) = register(username, password, setOf(Role.USER.getAuthorityName()))
+    fun register(username: String, password: String) {
+        if (userRepository.existsById(username)) throw IllegalArgumentException("User with username $username already exists")
+        register(username, password, setOf(Role.USER.getAuthorityName()))
+    }
 }

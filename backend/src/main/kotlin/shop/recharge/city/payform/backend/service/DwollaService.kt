@@ -138,7 +138,7 @@ class DwollaService(
             subscriptionService.subscribe(product.id!!)
         }
 
-        return transaction
+        return transaction.split(PATH_DELIMITER).last()
     }
 
     @Scheduled(cron = "@monthly")
