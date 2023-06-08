@@ -38,8 +38,10 @@ class SecurityConfig {
         .authorizeHttpRequests {
             it
                 .requestMatchers(HttpMethod.OPTIONS).permitAll()
-                .requestMatchers(HttpMethod.GET).hasAnyRole(Role.ADMIN.name, Role.USER.name)
-                .requestMatchers("/api/payform/**").hasAnyRole(Role.ADMIN.name, Role.USER.name)
+                .requestMatchers(HttpMethod.GET, "/api/users/check").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+                .requestMatchers(HttpMethod.GET).permitAll()
+                .requestMatchers("/api/payform/**", "/api/states/**").permitAll()
                 .anyRequest().hasRole(Role.ADMIN.name)
         }
         .httpBasic {

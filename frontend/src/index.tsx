@@ -10,16 +10,30 @@ import {Provider} from "react-redux";
 import {Protected} from "./auth";
 import {Login} from "./view/login";
 import {Forbidden} from "./view/forbidden";
+import {Register} from "./view/register";
+import {createTheme, ThemeProvider} from "@mui/material";
 
 const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
 );
+
+const theme = createTheme({
+    palette: {
+        success: {
+            main: '#B9F4A4'
+        }
+    }
+})
 
 
 const router = createBrowserRouter([
     {
         path: "/login",
         element: <Login/>
+    },
+    {
+        path: "/register",
+        element: <Register/>
     },
     {
         path: "/forbidden",
@@ -31,15 +45,18 @@ const router = createBrowserRouter([
     },
     {
         path: "/admin",
-        element: <Protected redirectTo={'/admin'}><Admin/></Protected>
+        element: <Protected admin={true} redirectTo={'/admin'}><Admin/></Protected>
     },
 ]);
 
 root.render(
     <React.StrictMode>
-        <Provider store={store}>
-            <RouterProvider router={router}/>
-        </Provider>
+        <ThemeProvider theme={theme}>
+            <Provider store={store}>
+                <RouterProvider router={router}/>
+            </Provider>
+        </ThemeProvider>
+
     </React.StrictMode>
 );
 

@@ -9,7 +9,11 @@ export const backendClient = axios.create({
     baseURL: `${BASE_URL}/api`
 });
 
-backendClient.interceptors.request.use(config => {
+export const backendSecureClient = axios.create({
+    baseURL: `${BASE_URL}/api`
+});
+
+backendSecureClient.interceptors.request.use(config => {
     const auth = store.getState().auth!!;
     config.auth = {
         username: auth.login,
@@ -18,7 +22,7 @@ backendClient.interceptors.request.use(config => {
     return config
 })
 
-backendClient.interceptors.response.use(res => {
+backendSecureClient.interceptors.response.use(res => {
     if (res.status === 401) store.dispatch.auth.logout()
     if (res.status === 403) {
         window.location.pathname = '/forbidden'

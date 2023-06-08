@@ -25,8 +25,7 @@ private const val LOCATION = "Location"
 
 @Service
 class DwollaService(
-    @Value("\${dwolla.api.base.url:https://api-sandbox.dwolla.com}")
-    private val dwollaBaseUrl: String,
+    @Value("\${dwolla.api.base.url:https://api-sandbox.dwolla.com}") private val dwollaBaseUrl: String,
     private val dwolla: Dwolla,
     private val productService: ProductService,
     private val customerService: CustomerService,
@@ -47,41 +46,9 @@ class DwollaService(
     ) = with(customerService.findOrCreateCustomer()) {
         if (this.dwollaId != null) return@with this
         else {
-            val created = try {
-                dwolla.customers.createVerifiedPersonal(
-                    firstName,
-                    lastName,
-                    email,
-                    address,
-                    city = city,
-                    state = state,
-                    postalCode = postalCode,
-                    dateOfBirth = LocalDate.parse(dateOfBirth)
-                        .let { DateOfBirth(it.year, it.monthValue, it.dayOfMonth) },
-                    ssn = ssn
-                )
-            } catch (e: DwollaApiException) {
-                val embeddedError = e.error._embedded?.errors
-                    ?.firstOrNull { it.code == DUPLICATE } ?: throw e
-
-                var customer = dwolla.customers.get(embeddedError.getHref(ABOUT).split("/").last())
-                if (customer.status == CustomerStatus.UNVERIFIED) {
-                    customer = dwolla.customers.retryVerifiedPersonal(
-                        customer.id,
-                        firstName,
-                        lastName,
-                        email,
-                        address,
-                        city = city,
-                        state = state,
-                        postalCode = postalCode,
-                        dateOfBirth = LocalDate.parse(dateOfBirth)
-                            .let { DateOfBirth(it.year, it.monthValue, it.dayOfMonth) },
-                        ssn = ssn
-                    )
-                }
-                customer
-            }
+            val created = doCreateOrGetDwollaCustomer(
+                firstName, lastName, email, address, city, state, postalCode, dateOfBirth, ssn
+            )
             customerService.setDwollaId(this.username, created.id)
             customerService.findOrCreateCustomer()
         }
@@ -92,19 +59,7 @@ class DwollaService(
         with(customerService.findOrCreateCustomer()) {
             if (fundingSource != null) return@with fundingSource!!
             else {
-                val created = try {
-                    dwolla.post(
-                        "$dwollaBaseUrl/customers/$userId/funding-sources",
-                        JsonBody(
-                            "name" to name,
-                            "plaidToken" to plaidToken,
-                        ),
-                    ).headers.get(LOCATION)
-                        ?: throw IllegalArgumentException("Failed to get transfer url")
-                } catch (e: DwollaApiException) {
-                    if (e.error.code != DUPLICATE_RESOURCE) throw e
-                    e.error.getHref(ABOUT).split(PATH_DELIMITER).last()
-                }
+                val created = doCreateOrGetFundingSource(userId, name, plaidToken)
                 return@with created.also {
                     customerService.setFundingSource(this.username, it)
                 }
@@ -131,8 +86,7 @@ class DwollaService(
                 ),
                 "amount" to DwollaMoney("USD", product.price.toString()),
             ),
-        ).headers.get(LOCATION)
-            ?: throw IllegalArgumentException("Failed to get transfer url")
+        ).headers.get(LOCATION) ?: throw IllegalArgumentException("Failed to get transfer url")
 
         if (product.isRecurring) {
             subscriptionService.subscribe(product.id!!)
@@ -144,5 +98,61 @@ class DwollaService(
     @Scheduled(cron = "@monthly")
     fun processRecurring() = subscriptionService.getAll().forEach {
         createTransfer(it.paymentId)
+    }
+
+    private fun doCreateOrGetDwollaCustomer(
+        firstName: String,
+        lastName: String,
+        email: String,
+        address: String,
+        city: String,
+        state: USState,
+        postalCode: String,
+        dateOfBirth: String,
+        ssn: String,
+    ) = try {
+        dwolla.customers.createVerifiedPersonal(
+            firstName,
+            lastName,
+            email,
+            address,
+            city = city,
+            state = state,
+            postalCode = postalCode,
+            dateOfBirth = LocalDate.parse(dateOfBirth).let { DateOfBirth(it.year, it.monthValue, it.dayOfMonth) },
+            ssn = ssn
+        )
+    } catch (e: DwollaApiException) {
+        val embeddedError = e.error._embedded?.errors?.firstOrNull { it.code == DUPLICATE } ?: throw e
+
+        var customer = dwolla.customers.get(embeddedError.getHref(ABOUT).split("/").last())
+        if (customer.status == CustomerStatus.UNVERIFIED) {
+            customer = dwolla.customers.retryVerifiedPersonal(
+                customer.id,
+                firstName,
+                lastName,
+                email,
+                address,
+                city = city,
+                state = state,
+                postalCode = postalCode,
+                dateOfBirth = LocalDate.parse(dateOfBirth).let { DateOfBirth(it.year, it.monthValue, it.dayOfMonth) },
+                ssn = ssn
+            )
+        }
+        customer
+    }
+
+    private fun doCreateOrGetFundingSource(userId: String, name: String, plaidToken: String) = try {
+        dwolla.post(
+            "$dwollaBaseUrl/customers/$userId/funding-sources",
+            JsonBody(
+                "name" to name,
+                "plaidToken" to plaidToken,
+            ),
+        ).headers.get(LOCATION) ?: throw IllegalArgumentException("Failed to get transfer url")
+    } catch (e: DwollaApiException) {
+        if (e.error.code != DUPLICATE_RESOURCE) throw e
+        e.error.getHref(ABOUT).split(PATH_DELIMITER).last()
     }
 }

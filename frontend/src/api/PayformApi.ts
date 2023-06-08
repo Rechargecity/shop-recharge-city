@@ -1,4 +1,4 @@
-import {backendClient} from "./index";
+import {backendSecureClient} from "./index";
 
 interface GetUserResponseDto {
     id: string
@@ -6,7 +6,7 @@ interface GetUserResponseDto {
 }
 
 export const checkUser = async () => {
-    return await backendClient.get('/payform/check-user')
+    return await backendSecureClient.get('/payform/check-user')
         .then(r => r.data as boolean)
 }
 
@@ -21,7 +21,7 @@ export const getUser = async (
     dateOfBirth: string,
     ssn: string,
 ) => {
-    return await backendClient.get('/payform/user', {
+    return await backendSecureClient.get('/payform/user', {
         params: {
             'first-name': firstName,
             'last-name': lastName,
@@ -36,19 +36,19 @@ export const getUser = async (
     }).then(r => r.data as GetUserResponseDto)
 }
 export const getLinkToken = async (userId: string) => {
-    return await backendClient.get('/payform/link-token', {
+    return await backendSecureClient.get('/payform/link-token', {
         params: {
             'user-id': userId
         }
     }).then(r => r.data as string)
 }
 export const processNotAttached = async (userId: string, token: string, accountId: string, productId: string) => {
-    return await backendClient.post(`/payform/process-not-attached/${productId}`, {
+    return await backendSecureClient.post(`/payform/process-not-attached/${productId}`, {
         userId: userId,
         publicToken: token,
         accountId: accountId,
     }).then(r => r.data as string)
 }
 export const processAttached = async (productId: string) => {
-    return await backendClient.post(`/payform/process-attached/${productId}`,).then(r => r.data as string)
+    return await backendSecureClient.post(`/payform/process-attached/${productId}`,).then(r => r.data as string)
 }

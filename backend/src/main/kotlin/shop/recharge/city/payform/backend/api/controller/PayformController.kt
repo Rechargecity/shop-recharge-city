@@ -19,11 +19,12 @@ import shop.recharge.city.payform.backend.service.PlaidService
 class PayformController(
     private val dwollaService: DwollaService,
     private val plaidService: PlaidService,
-    private val customerService: CustomerService
+    private val customerService: CustomerService,
 ) {
 
     @GetMapping("/check-user")
     fun checkUser() = customerService.checkCustomerReadyForTransfer()
+
     @GetMapping("/user")
     fun getUser(
         @RequestParam("first-name") firstName: String,

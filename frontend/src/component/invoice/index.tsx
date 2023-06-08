@@ -26,9 +26,10 @@ export const Invoice: React.FC<InvoiceProps> = (props) => (
     <div style={{
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         gap: '36px',
         border: props.outlined ? '1px solid' : '0',
+        minWidth: '20vw',
         padding: '16px',
         borderRadius: '16px'
     }}>
@@ -44,9 +45,11 @@ export const Invoice: React.FC<InvoiceProps> = (props) => (
                 }}
                 label="Recurring"/>
             <h2>{props.description}</h2>
-            <h1>{props.price}</h1>
+            <h1>{props.price}&nbsp;$</h1>
         </div>
-        <Button onClick={props.onButtonClick}>
+        <Button
+            disabled={false}
+            onClick={props.onButtonClick}>
             {props.buttonText}
         </Button>
     </div>
@@ -112,13 +115,15 @@ export const ProductEditForm: React.FC<ProductEditFormProps> = (props) => {
                         />
                     }/>
             </div>
-            <Button onClick={() => {
-                const product: Product = {name, description, price, isRecurring};
-                if (id) {
-                    product.id = id
-                }
-                props.onSubmit(product)
-            }} children={props.buttonText}></Button>
+            <Button
+                disabled={false}
+                onClick={() => {
+                    const product: Product = {name, description, price, isRecurring};
+                    if (id) {
+                        product.id = id
+                    }
+                    props.onSubmit(product)
+                }} children={props.buttonText}></Button>
 
         </div>
     )

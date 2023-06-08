@@ -1,23 +1,22 @@
 import React, {ReactNode} from "react";
+import {Button as MUIButton} from "@mui/material";
 
 interface ButtonProps {
+    disabled: boolean
     onClick: () => void
     children?: ReactNode,
 }
 
 export const Button: React.FC<ButtonProps> = (props) => (
-    <button
-        style={{
-            cursor: "pointer",
-            borderRadius: '12px',
-            border: 0,
-            background: '#B9F4A4',
-            alignItems: 'center',
-            textAlign:'center',
-            justifyContent: 'center',
-            width: '100%',
-            height: '100%'
+    <MUIButton
+        sx={{
+            height: '64px',
+            borderRadius: '15px'
         }}
+        fullWidth={true}
+        disabled={props.disabled}
+        variant={'contained'}
+        color={'success'}
         onClick={props.onClick}>
         <p style={{
             fontWeight: '400',
@@ -25,5 +24,5 @@ export const Button: React.FC<ButtonProps> = (props) => (
         }}>
             {props.children || 'Checkout'}
         </p>
-    </button>
+    </MUIButton>
 )

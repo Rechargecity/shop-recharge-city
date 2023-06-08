@@ -1,13 +1,21 @@
 import {useParams} from "react-router-dom";
+import dayjs, {Dayjs} from 'dayjs';
 import {Header} from "../../component/header";
 import {Invoice} from "../../component/invoice";
 import {checkUser, getLinkToken, getProduct, getUser, processAttached, processNotAttached, Product} from "../../api";
-import React, {ReactNode, useEffect, useRef, useState} from "react";
-import {Backdrop, Dialog, DialogTitle, TextField} from "@mui/material";
+import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
+import {Backdrop, Box, Dialog, DialogTitle, FormControl, InputLabel, MenuItem, Select, TextField} from "@mui/material";
 import {Button} from "../../component/button";
+import {DatePicker, LocalizationProvider} from "@mui/x-date-pickers";
+import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
+import {getStates} from "../../api/StatesApi";
+
+const EMAIL_REGEXP = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
+const POSTAL_CODE_REGEXP = /\d{5,}/
+const SSN_REGEXP = /\d{9}/
+const MIN_DOB = '1980-01-01';
 
 interface UserInfoFormProps {
-
     onSubmit: (
         firstName: string,
         lastName: string,
@@ -21,7 +29,20 @@ interface UserInfoFormProps {
     ) => void
 }
 
+interface Validation {
+    firstName: boolean,
+    lastName: boolean,
+    email: boolean,
+    address: boolean,
+    city: boolean,
+    state: boolean,
+    dob: boolean,
+    postalCode: boolean,
+    ssn: boolean
+}
+
 const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
+    const DEFAULT_DOB = dayjs('1970-01-01');
 
     const [firstName, setFirstName] = useState<string>('')
     const [lastName, setLastName] = useState<string>('')
@@ -30,95 +51,248 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
     const [city, setCity] = useState<string>('')
     const [state, setState] = useState<string>('')
     const [postalCode, setPostalCode] = useState<string>('')
-    const [dateOfBirth, setDateOfBirth] = useState<string>('')
+    const [dateOfBirth, setDateOfBirth] = useState<Dayjs>(DEFAULT_DOB)
     const [ssn, setSsn] = useState<string>('')
 
+
+    const [validation, setValidation] = useState<Validation>({
+        firstName: false,
+        lastName: false,
+        email: false,
+        address: false,
+        city: false,
+        state: false,
+        dob: false,
+        postalCode: false,
+        ssn: false,
+    })
+
+    const [isButtonDisabled, setButtonDisabled] = useState<boolean>(false)
+
+    const mountRef = useRef<boolean>(false);
+
+    const [states, setStates] = useState<string[]>([]);
+
+    const statesMemo = useMemo(() => {
+        if (!mountRef.current) {
+            getStates().then(newStates => {
+                setStates(newStates)
+            })
+        }
+        return states
+    }, [states])
+
+    useEffect(() => {
+        if (mountRef.current) {
+            const isAllValid = validation.firstName
+                && validation.lastName
+                && validation.email
+                && validation.address
+                && validation.city
+                && validation.state
+                && validation.dob
+                && validation.postalCode
+                && validation.ssn
+            setButtonDisabled(!isAllValid)
+            return
+        }
+
+        mountRef.current = true
+    }, [validation])
+
     return (
-        <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'left',
-            padding: '16px 24px',
-            gap: '10px'
-        }}>
+        <Box
+            component="form"
+            autoComplete={'off'}
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                minWidth: '30vw',
+                padding: '16px 24px',
+                gap: '16px'
+            }}>
             <TextField
                 id="firstName"
                 label="First name"
                 value={firstName}
                 variant="outlined"
-                onChange={(it) => setFirstName(it.target.value)}
+                error={!validation.firstName}
+                onChange={(it) => {
+                    const value = it.target.value;
+                    setFirstName(value)
+                    setValidation(state => {
+                        return {
+                            ...state,
+                            firstName: value.length !== 0,
+                        }
+                    })
+                }}
             />
             <TextField
                 id="lastName"
                 label="Last name"
                 variant="outlined"
                 value={lastName}
-                onChange={(it) => setLastName(it.target.value)}
+                error={!validation.lastName}
+                onChange={(it) => {
+                    const value = it.target.value;
+                    setLastName(value)
+                    setValidation(state => {
+                        return {
+                            ...state,
+                            lastName: value.length !== 0,
+                        }
+                    })
+                }}
             />
             <TextField
                 id="email"
                 label="Email"
                 variant="outlined"
                 value={email}
-                onChange={(it) => setEmail(it.target.value)}
+                error={!validation.email}
+                helperText={'john@doe.com'}
+                onChange={(it) => {
+                    const value = it.target.value;
+                    setEmail(value)
+                    setValidation(state => {
+                        return {
+                            ...state,
+                            email: EMAIL_REGEXP.test(value),
+                        }
+                    })
+                }}
             />
             <TextField
                 id="address"
                 label="Address"
                 variant="outlined"
+                error={!validation.address}
+                helperText={'99-99 33rd St'}
                 value={address}
-                onChange={(it) => setAddress(it.target.value)}
+                onChange={(it) => {
+                    const value = it.target.value;
+                    setAddress(value)
+                    setValidation(state => {
+                        return {
+                            ...state,
+                            address: value.length !== 0,
+                        }
+                    })
+                }}
             />
             <TextField
                 id="city"
                 label="City"
+                error={!validation.city}
                 variant="outlined"
+                helperText={'New York'}
                 value={city}
-                onChange={(it) => setCity(it.target.value)}
+                onChange={(it) => {
+                    const value = it.target.value;
+                    setCity(value)
+                    setValidation(state => {
+                        return {
+                            ...state,
+                            city: value.length !== 0,
+                        }
+                    })
+                }}
             />
+            <FormControl>
+                <InputLabel id="state-select-label">State</InputLabel>
+                <Select
+                    error={!validation.state}
+                    variant={'outlined'}
+                    labelId="state-select-label"
+                    id="state-select"
+                    value={state}
+                    label="State"
+                    onChange={(it) => {
+                        const value = it.target.value;
+                        setValidation(state => {
+                            return {
+                                ...state,
+                                state: value.length !== 0,
+                            }
+                        })
+                        setState(it.target.value)
+                    }}
+                >
+                    {statesMemo.map(it => (<MenuItem value={it}>{it}</MenuItem>))}
+                </Select>
+            </FormControl>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                    label={'Date of birth'}
+                    disableFuture={true}
+                    defaultValue={dayjs()}
+                    value={dateOfBirth}
+                    minDate={dayjs(MIN_DOB)}
+                    onChange={(newValue) => {
+                        setValidation(state => {
+                            return {
+                                ...state,
+                                dob: !!newValue,
+                            }
+                        })
+                        setDateOfBirth(newValue!!)
+                    }}/>
+            </LocalizationProvider>
             <TextField
-                id="state"
-                label="State"
-                variant="outlined"
-                value={state}
-                onChange={(it) => setState(it.target.value)}
-            />
-            <TextField
-                id="dob"
-                label="Date of birth"
-                variant="outlined"
-                value={dateOfBirth}
-                onChange={(it) => setDateOfBirth(it.target.value)}
-            />
-            <TextField
+                error={!validation.postalCode}
+                inputProps={{inputMode: 'numeric', pattern: POSTAL_CODE_REGEXP}}
                 id="zip"
                 label="Postal code"
                 variant="outlined"
                 value={postalCode}
-                onChange={(it) => setPostalCode(it.target.value)}
+                helperText={'11101'}
+                onChange={(it) => {
+                    const value = it.target.value;
+                    setPostalCode(value)
+                    setValidation(state => {
+                        return {
+                            ...state,
+                            postalCode: POSTAL_CODE_REGEXP.test(value),
+                        }
+                    })
+                }}
             />
             <TextField
+                error={!validation.ssn}
+                inputProps={{inputMode: 'numeric', pattern: SSN_REGEXP}}
                 id="ssn"
                 label="SSN"
                 variant="outlined"
+                helperText={'123456789'}
                 value={ssn}
-                onChange={(it) => setSsn(it.target.value)}
+                onChange={(it) => {
+                    const value = it.target.value;
+                    setSsn(value)
+                    setValidation(state => {
+                        return {
+                            ...state,
+                            ssn: SSN_REGEXP.test(value),
+                        }
+                    })
+                }}
             />
-            <Button onClick={() => {
-                props.onSubmit(
-                    firstName,
-                    lastName,
-                    email,
-                    address,
-                    city,
-                    state,
-                    postalCode,
-                    dateOfBirth,
-                    ssn
-                )
-            }} children={'Confirm'}></Button>
-        </div>
+            <Button
+                disabled={isButtonDisabled}
+                onClick={() => {
+                    props.onSubmit(
+                        firstName,
+                        lastName,
+                        email,
+                        address,
+                        city,
+                        state,
+                        postalCode,
+                        dateOfBirth.format('YYYY-MM-DD'),
+                        ssn
+                    )
+                }} children={'Confirm'}></Button>
+        </Box>
     )
 }
 
@@ -152,6 +326,8 @@ export const Payment = () => {
 
     const handleSuccessTransaction = (transactionId: string) => {
         alert(`Successfully created transaction with id ${transactionId}`)
+        setUserInfoFormOpen(false)
+        setBackdropOpen(false)
     }
 
     const handleSubmit = (
@@ -188,13 +364,17 @@ export const Payment = () => {
                             processNotAttached(user.id, publicToken, metadata.account_id, id)
                                 .then(transactionId => handleSuccessTransaction(transactionId))
                                 .catch((e) => {
+                                    console.log(e)
                                     alert(`Failed to create transaction`)
+                                    setUserInfoFormOpen(false)
                                     setBackdropOpen(false)
                                 })
-                                .finally(() => setBackdropOpen(false))
                         },
                     }).open()
                 })
+        }).catch(e => {
+            alert("Something went wrong")
+            console.log(e)
         })
     }
 

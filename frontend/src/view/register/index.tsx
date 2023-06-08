@@ -1,19 +1,16 @@
 import React, {useState} from "react";
 import {Header} from "../../component/header";
-import {Link, TextField} from "@mui/material";
+import {TextField} from "@mui/material";
 import {Button} from "../../component/button";
 import {Dispatch, RootState} from "../../storage";
 import {useDispatch, useSelector} from "react-redux";
-import {Navigate, useSearchParams} from "react-router-dom";
-import {checkCredentials} from "../../api/UsersApi";
+import {Navigate} from "react-router-dom";
+import {register} from "../../api/UsersApi";
 
-export const Login = () => {
+export const Register = () => {
     const [login, setLogin] = useState('')
     const [password, setPassword] = useState('')
     const dispatch = useDispatch<Dispatch>()
-
-    const [searchParams] = useSearchParams();
-    const redirectTo = searchParams.get("redirect-to") || '/'
     const auth = useSelector((state: RootState) => state.auth);
 
     return !auth?.isAuthenticated ? (
@@ -55,24 +52,20 @@ export const Login = () => {
                     <Button
                         disabled={false}
                         onClick={() => {
-                            dispatch.auth.saveAuthInfo({
-                                isAuthenticated: false,
-                                login: login,
-                                password: password
-                            })
-                            checkCredentials().then(r => {
-                                dispatch.auth.saveAuthInfo({
-                                    isAuthenticated: r,
+                            register(login, password)
+                                .then(() => dispatch.auth.saveAuthInfo({
+                                    isAuthenticated: true,
                                     login: login,
                                     password: password
+                                }))
+                                .catch(e => {
+                                    console.log(e)
                                 })
-                            }).catch(dispatch.auth.logout)
                         }}>
-                        Login
+                        Register
                     </Button>
-                    <Link href={'/register'}>Sign up</Link>
                 </div>
             </div>
         </div>
-    ) : (<Navigate to={redirectTo}/>)
+    ) : (<Navigate to={'/'}/>)
 }

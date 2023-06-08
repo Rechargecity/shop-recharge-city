@@ -7,6 +7,9 @@ import {Button} from "../../component/button";
 import CreateIcon from '@mui/icons-material/Create';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
+import {useSelector} from "react-redux";
+import {RootState} from "../../storage";
+import {Navigate} from "react-router-dom";
 
 const invoiceEditButtonStyle: React.CSSProperties = {
     cursor: 'pointer',
@@ -15,6 +18,8 @@ const invoiceEditButtonStyle: React.CSSProperties = {
 }
 
 export const Admin = () => {
+
+    const auth = useSelector((state: RootState) => state.auth);
 
     const [hasMore, setHasMore] = useState(true)
     const [page, setPage] = useState(1)
@@ -61,8 +66,6 @@ export const Admin = () => {
         }
         document.body.removeChild(textArea);
         setSnackbarOpen(true)
-        // navigator.clipboard.writeText(`${window.location.origin}/payment/${id}`)
-        //     .then(() => setSnackbarOpen(true))
     }
 
     return (
@@ -81,10 +84,12 @@ export const Admin = () => {
                     height: '80px',
                     paddingBottom: '64px'
                 }}>
-                    <Button onClick={() => {
-                        setCurrentProduct(undefined)
-                        setCreateDialogOpen(true)
-                    }}>
+                    <Button
+                        disabled={false}
+                        onClick={() => {
+                            setCurrentProduct(undefined)
+                            setCreateDialogOpen(true)
+                        }}>
                         <div style={{
                             display: 'flex',
                             justifyContent: 'center',
