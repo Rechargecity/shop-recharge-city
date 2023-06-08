@@ -70,7 +70,7 @@ export const Login = () => {
                         }}>
                         Login
                     </Button>
-                    <Link href={'/register'}>Sign up</Link>
+                    <Link href={`/register?redirect-to=${redirectTo}`}>Sign up</Link>
                 </div>
             </div>
         </div>

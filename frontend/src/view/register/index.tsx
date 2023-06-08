@@ -4,7 +4,7 @@ import {TextField} from "@mui/material";
 import {Button} from "../../component/button";
 import {Dispatch, RootState} from "../../storage";
 import {useDispatch, useSelector} from "react-redux";
-import {Navigate} from "react-router-dom";
+import {Navigate, useSearchParams} from "react-router-dom";
 import {register} from "../../api/UsersApi";
 
 export const Register = () => {
@@ -12,6 +12,9 @@ export const Register = () => {
     const [password, setPassword] = useState('')
     const dispatch = useDispatch<Dispatch>()
     const auth = useSelector((state: RootState) => state.auth);
+
+    const [searchParams] = useSearchParams();
+    const redirectTo = searchParams.get("redirect-to") || '/'
 
     return !auth?.isAuthenticated ? (
         <div style={{
@@ -67,5 +70,5 @@ export const Register = () => {
                 </div>
             </div>
         </div>
-    ) : (<Navigate to={'/'}/>)
+    ) : (<Navigate to={redirectTo}/>)
 }

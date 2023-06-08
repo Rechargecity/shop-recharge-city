@@ -21,11 +21,3 @@ backendSecureClient.interceptors.request.use(config => {
     }
     return config
 })
-
-backendSecureClient.interceptors.response.use(res => {
-    if (res.status === 401) store.dispatch.auth.logout()
-    if (res.status === 403) {
-        window.location.pathname = '/forbidden'
-    }
-    return res
-})
