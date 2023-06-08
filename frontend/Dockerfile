@@ -3,7 +3,7 @@ ARG env
 WORKDIR /app
 COPY package.json ./
 COPY yarn.lock ./
-RUN yarn install --frozen-lockfile
+RUN yarn install --frozen-lockfile --network-timeout=30000
 COPY . .
 RUN echo "REACT_APP_ENV=$env" > .env
 RUN yarn build
