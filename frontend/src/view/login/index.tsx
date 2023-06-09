@@ -6,6 +6,7 @@ import {Dispatch, RootState} from "../../storage";
 import {useDispatch, useSelector} from "react-redux";
 import {Navigate, useSearchParams} from "react-router-dom";
 import {checkCredentials} from "../../api/UsersApi";
+import {AdaptiveHeaderText} from "../../component/adaptive";
 
 export const Login = () => {
     const [login, setLogin] = useState('')
@@ -29,9 +30,10 @@ export const Login = () => {
                 flexDirection: 'column',
                 flexGrow: 1,
                 justifyContent: 'center',
+                textAlign:'center',
                 alignItems: 'center',
             }}>
-                <h1>Welcome</h1>
+                <AdaptiveHeaderText>Welcome</AdaptiveHeaderText>
                 <div style={{
                     display: 'flex',
                     flexDirection: 'column',

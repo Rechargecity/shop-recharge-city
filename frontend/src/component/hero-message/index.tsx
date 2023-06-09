@@ -11,7 +11,9 @@ export const HeroMessage: React.FC<Props> = (props) => (
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: '10vh'
+        marginBottom: '10vh',
+        textAlign:'center',
+        padding: '16px'
     }}>
         {props.children}
     </main>

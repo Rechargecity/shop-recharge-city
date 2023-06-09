@@ -1,11 +1,11 @@
 import {Header} from "../../component/header";
+import {AdaptiveHeaderText} from "../../component/adaptive";
 import React from "react";
 import {HeroMessage} from "../../component/hero-message";
-import {useParams} from "react-router-dom";
 
 export const Success: React.FC = () => {
 
-    const {transactionId} = useParams()
+    // const {transactionId} = useParams()
 
     return (
         <div style={{
@@ -15,7 +15,12 @@ export const Success: React.FC = () => {
             flexDirection: 'column',
         }}>
             <Header/>
-            <HeroMessage><h1>Success transaction {transactionId}</h1></HeroMessage>
+            <HeroMessage>
+                <AdaptiveHeaderText>
+                    Thank you!<br/>
+                    Your payment has been processed successfully
+                </AdaptiveHeaderText>
+            </HeroMessage>
         </div>
     )
 }

@@ -6,6 +6,7 @@ import {Dispatch, RootState} from "../../storage";
 import {useDispatch, useSelector} from "react-redux";
 import {Navigate, useSearchParams} from "react-router-dom";
 import {register} from "../../api/UsersApi";
+import {AdaptiveHeaderText} from "../../component/adaptive";
 
 export const Register = () => {
     const [login, setLogin] = useState('')
@@ -30,8 +31,9 @@ export const Register = () => {
                 flexGrow: 1,
                 justifyContent: 'center',
                 alignItems: 'center',
+                textAlign:'center'
             }}>
-                <h1>Please, register to proceed to payment</h1>
+                <AdaptiveHeaderText>Please, register to proceed to payment</AdaptiveHeaderText>
                 <div style={{
                     display: 'flex',
                     flexDirection: 'column',
