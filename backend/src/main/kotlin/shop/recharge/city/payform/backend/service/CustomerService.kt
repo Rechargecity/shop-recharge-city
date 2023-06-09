@@ -20,6 +20,8 @@ class CustomerService(
             ?: customerRepository.save(CustomerEntity(username))
     }
 
+    fun findCustomer(username: String) = customerRepository.findByIdOrNull(username)
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun setDwollaId(username: String, dwollaId: String) = customerRepository.setDwollaId(username, dwollaId)
 

@@ -1,13 +1,13 @@
 package shop.recharge.city.payform.backend.service
 
 import com.dwolla.Dwolla
+import com.dwolla.DwollaEnvironment
 import com.dwolla.api.shared.DateOfBirth
 import com.dwolla.exception.DwollaApiException
 import com.dwolla.http.JsonBody
 import com.dwolla.resource.customers.CustomerStatus
 import com.dwolla.shared.USState
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -26,12 +26,16 @@ private const val LOCATION = "Location"
 
 @Service
 class DwollaService(
-    @Value("\${dwolla.api.base.url:https://api-sandbox.dwolla.com}") private val dwollaBaseUrl: String,
     private val dwolla: Dwolla,
     private val productService: ProductService,
     private val customerService: CustomerService,
     private val subscriptionService: SubscriptionService,
 ) {
+
+    private val dwollaBaseUrl: String = when (dwolla.environment) {
+        DwollaEnvironment.PRODUCTION -> "https://api.dwolla.com"
+        else -> "https://api-sandbox.dwolla.com"
+    }
 
     private val log = LoggerFactory.getLogger(DwollaService::class.java)
 
@@ -99,10 +103,18 @@ class DwollaService(
     }
 
     @Scheduled(cron = "\${dwolla.recurring.cron:@monthly}")
-    fun processRecurring() = subscriptionService.getAll().forEach {
-        createTransfer(it.paymentId).let { transferId ->
-            log.info("Created transfer $transferId by recurring service for subscription $it")
-        }
+    fun processRecurring() = subscriptionService.getAll().forEach { subscription ->
+        (customerService.findCustomer(subscription.username)
+            ?: throw IllegalArgumentException("Customer ${subscription.username} does not exist"))
+            .let { customer ->
+                createTransfer(
+                    subscription.paymentId, customer.fundingSource
+                        ?: throw IllegalArgumentException("Funding source for customer ${subscription.username} is null")
+                ).let { transferId ->
+                    log.info("Created transfer $transferId by recurring service for subscription $subscription")
+                }
+            }
+
     }
 
     private fun doCreateOrGetDwollaCustomer(
