@@ -108,7 +108,8 @@ class DwollaService(
             ?: throw IllegalArgumentException("Customer ${subscription.username} does not exist"))
             .let { customer ->
                 createTransfer(
-                    subscription.paymentId, customer.fundingSource
+                    subscription.paymentId,
+                    customer.fundingSource
                         ?: throw IllegalArgumentException("Funding source for customer ${subscription.username} is null")
                 ).let { transferId ->
                     log.info("Created transfer $transferId by recurring service for subscription $subscription")
