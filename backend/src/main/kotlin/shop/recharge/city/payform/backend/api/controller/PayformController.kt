@@ -63,13 +63,13 @@ class PayformController(
         val processorToken = plaidService.createProcessorToken(payload.publicToken, payload.accountId)
         val fundingSourceId =
             dwollaService.createOrGetFundingSource(payload.userId, processorToken, payload.accountName)
-        return dwollaService.createTransfer(paymentId, fundingSourceId)
+        return dwollaService.createTransaction(paymentId, fundingSourceId)
     }
 
     @PostMapping("/process-attached/{paymentId}")
     fun processAttached(
         @PathVariable paymentId: String,
     ): String {
-        return dwollaService.createTransfer(paymentId)
+        return dwollaService.createTransaction(paymentId)
     }
 }

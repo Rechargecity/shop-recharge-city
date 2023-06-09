@@ -6,6 +6,7 @@ import com.dwolla.api.shared.DateOfBirth
 import com.dwolla.exception.DwollaApiException
 import com.dwolla.http.JsonBody
 import com.dwolla.resource.customers.CustomerStatus
+import com.dwolla.resource.fundingsources.FundingSource
 import com.dwolla.shared.USState
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import shop.recharge.city.payform.backend.model.DwollaFundingSourceLink
 import shop.recharge.city.payform.backend.model.DwollaMoney
+import shop.recharge.city.payform.backend.model.Product
 import java.time.LocalDate
 import java.util.UUID
 
@@ -74,26 +76,16 @@ class DwollaService(
         }
 
     @Transactional
-    fun createTransfer(productId: String, sourceFundingSourceId: String? = null): String {
+    fun createTransaction(productId: String): String {
 
-        val actualSourceFundingSourceId =
-            sourceFundingSourceId ?: customerService.findOrCreateCustomer().fundingSource!!
+        val actualSourceFundingSourceId = customerService.findOrCreateCustomer().fundingSource!!
 
         val product = productService.findById(UUID.fromString(productId))
         val accountId = dwolla.root.get().getHref(ACCOUNT).split(PATH_DELIMITER).last()
         val destinationFundingSource =
             dwolla.fundingSources.listByAccount(accountId, false)._embedded.fundingSources.first()
 
-        val transaction = dwolla.post(
-            "$dwollaBaseUrl/transfers",
-            JsonBody(
-                "_links" to mapOf(
-                    "destination" to DwollaFundingSourceLink("${dwollaBaseUrl}/funding-sources/${destinationFundingSource.id}"),
-                    "source" to DwollaFundingSourceLink("${dwollaBaseUrl}/funding-sources/$actualSourceFundingSourceId")
-                ),
-                "amount" to DwollaMoney("USD", product.price.toString()),
-            ),
-        ).headers.get(LOCATION) ?: throw IllegalArgumentException("Failed to get transfer url")
+        val transaction = doCreateTransaction(destinationFundingSource, actualSourceFundingSourceId, product)
 
         if (product.isRecurring) {
             subscriptionService.subscribe(product.id!!)
@@ -102,20 +94,44 @@ class DwollaService(
         return transaction.split(PATH_DELIMITER).last()
     }
 
+    private fun doCreateTransaction(
+        destinationFundingSource: FundingSource,
+        actualSourceFundingSourceId: String,
+        product: Product,
+    ) = dwolla.post(
+        "$dwollaBaseUrl/transfers",
+        JsonBody(
+            "_links" to mapOf(
+                "destination" to DwollaFundingSourceLink("${dwollaBaseUrl}/funding-sources/${destinationFundingSource.id}"),
+                "source" to DwollaFundingSourceLink("${dwollaBaseUrl}/funding-sources/$actualSourceFundingSourceId")
+            ),
+            "amount" to DwollaMoney("USD", product.price.toString()),
+        ),
+    ).headers.get(LOCATION) ?: throw IllegalArgumentException("Failed to get transfer url")
+
     @Scheduled(cron = "\${dwolla.recurring.cron:@monthly}")
     fun processRecurring() = subscriptionService.getAll().forEach { subscription ->
-        (customerService.findCustomer(subscription.username)
-            ?: throw IllegalArgumentException("Customer ${subscription.username} does not exist"))
-            .let { customer ->
-                createTransfer(
-                    subscription.paymentId,
-                    customer.fundingSource
-                        ?: throw IllegalArgumentException("Funding source for customer ${subscription.username} is null")
-                ).let { transferId ->
-                    log.info("Created transfer $transferId by recurring service for subscription $subscription")
-                }
-            }
+        val customer = customerService.findCustomer(subscription.username)
+            ?: throw IllegalArgumentException("Customer ${subscription.username} does not exist")
 
+        val product = productService.findById(UUID.fromString(subscription.paymentId))
+
+        val accountId = dwolla.root
+            .get()
+            .getHref(ACCOUNT)
+            .split(PATH_DELIMITER)
+            .last()
+
+        val destinationFundingSource = dwolla.fundingSources
+            .listByAccount(accountId, false)
+            ._embedded
+            .fundingSources
+            .first()
+
+        doCreateTransaction(destinationFundingSource, customer.fundingSource!!, product)
+            .let {
+                log.info("Created transfer $it by recurring service for subscription $subscription")
+            }
     }
 
     private fun doCreateOrGetDwollaCustomer(
