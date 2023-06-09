@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {Header} from "../../component/header";
-import {TextField} from "@mui/material";
+import {Link, TextField} from "@mui/material";
 import {Button} from "../../component/button";
 import {Dispatch, RootState} from "../../storage";
 import {useDispatch, useSelector} from "react-redux";
@@ -31,7 +31,7 @@ export const Register = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
             }}>
-                <h1>Welcome</h1>
+                <h1>Please, register to proceed to payment</h1>
                 <div style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -62,11 +62,12 @@ export const Register = () => {
                                     password: password
                                 }))
                                 .catch(e => {
-                                    console.log(e)
+                                    alert(e)
                                 })
                         }}>
                         Register
                     </Button>
+                    <Link href={`/login?redirect-to=${redirectTo}`}>Login</Link>
                 </div>
             </div>
         </div>

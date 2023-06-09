@@ -1,5 +1,6 @@
 import {Header} from "../../component/header";
 import React from "react";
+import {HeroMessage} from "../../component/hero-message";
 
 export const Forbidden = () => (
     <div style={{
@@ -8,13 +9,7 @@ export const Forbidden = () => (
         display: 'flex',
         flexDirection: 'column',
     }}>
-        <Header rightItem={<h2>Admin panel</h2>}/>
-        <div style={{
-            display: 'flex',
-            flexGrow: '1',
-            flexDirection: 'column'
-        }}>
-            <h1>Forbidden</h1>
-        </div>
+        <Header/>
+        <HeroMessage><h1>Forbidden</h1></HeroMessage>
     </div>
 )

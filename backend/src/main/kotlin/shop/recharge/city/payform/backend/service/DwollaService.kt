@@ -6,6 +6,7 @@ import com.dwolla.exception.DwollaApiException
 import com.dwolla.http.JsonBody
 import com.dwolla.resource.customers.CustomerStatus
 import com.dwolla.shared.USState
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -31,6 +32,8 @@ class DwollaService(
     private val customerService: CustomerService,
     private val subscriptionService: SubscriptionService,
 ) {
+
+    private val log = LoggerFactory.getLogger(DwollaService::class.java)
 
     @Transactional
     fun createOrGetCustomer(
@@ -95,9 +98,11 @@ class DwollaService(
         return transaction.split(PATH_DELIMITER).last()
     }
 
-    @Scheduled(cron = "@monthly")
+    @Scheduled(cron = "\${dwolla.recurring.cron:@monthly}")
     fun processRecurring() = subscriptionService.getAll().forEach {
-        createTransfer(it.paymentId)
+        createTransfer(it.paymentId).let { transferId ->
+            log.info("Created transfer $transferId by recurring service for subscription $it")
+        }
     }
 
     private fun doCreateOrGetDwollaCustomer(

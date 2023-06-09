@@ -4,15 +4,28 @@ import {Header} from "../../component/header";
 import {Invoice} from "../../component/invoice";
 import {checkUser, getLinkToken, getProduct, getUser, processAttached, processNotAttached, Product} from "../../api";
 import React, {ReactNode, useEffect, useMemo, useRef, useState} from "react";
-import {Backdrop, Box, Dialog, DialogTitle, FormControl, InputLabel, MenuItem, Select, TextField} from "@mui/material";
+import {
+    Backdrop,
+    Box,
+    Dialog,
+    DialogTitle,
+    FormControl,
+    FormHelperText,
+    InputLabel,
+    MenuItem,
+    OutlinedInput,
+    Select,
+    TextField
+} from "@mui/material";
 import {Button} from "../../component/button";
 import {DatePicker, LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {getStates} from "../../api/StatesApi";
+import {IMaskInput} from "react-imask";
 
 const EMAIL_REGEXP = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
 const POSTAL_CODE_REGEXP = /\d{5,}/
-const SSN_REGEXP = /\d{9}/
+const SSN_REGEXP = /\d{3}-\d{2}-\d{4}/
 const MIN_DOB = '1980-01-01';
 
 interface UserInfoFormProps {
@@ -30,19 +43,41 @@ interface UserInfoFormProps {
 }
 
 interface Validation {
-    firstName: boolean,
-    lastName: boolean,
-    email: boolean,
-    address: boolean,
-    city: boolean,
-    state: boolean,
-    dob: boolean,
-    postalCode: boolean,
-    ssn: boolean
+    firstName?: boolean,
+    lastName?: boolean,
+    email?: boolean,
+    address?: boolean,
+    city?: boolean,
+    state?: boolean,
+    dob?: boolean,
+    postalCode?: boolean,
+    ssn?: boolean
 }
 
+interface CustomProps {
+    onChange: (event: { target: { name: string; value: string } }) => void;
+    name: string;
+}
+
+const SsnTextMask = React.forwardRef<HTMLElement, CustomProps>(
+    function TextMaskCustom(props, ref) {
+        const {onChange, ...other} = props;
+        return (
+            <IMaskInput
+                {...other}
+                mask="#00-00-0000"
+                definitions={{
+                    '#': /[1-9]/,
+                }}
+                inputRef={ref}
+                onAccept={(value: any) => onChange({target: {name: props.name, value}})}
+                overwrite
+            />
+        );
+    },
+);
+
 const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
-    const DEFAULT_DOB = dayjs('1970-01-01');
 
     const [firstName, setFirstName] = useState<string>('')
     const [lastName, setLastName] = useState<string>('')
@@ -51,21 +86,10 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
     const [city, setCity] = useState<string>('')
     const [state, setState] = useState<string>('')
     const [postalCode, setPostalCode] = useState<string>('')
-    const [dateOfBirth, setDateOfBirth] = useState<Dayjs>(DEFAULT_DOB)
+    const [dateOfBirth, setDateOfBirth] = useState<Dayjs>()
     const [ssn, setSsn] = useState<string>('')
 
-
-    const [validation, setValidation] = useState<Validation>({
-        firstName: false,
-        lastName: false,
-        email: false,
-        address: false,
-        city: false,
-        state: false,
-        dob: false,
-        postalCode: false,
-        ssn: false,
-    })
+    const [validation, setValidation] = useState<Validation>()
 
     const [isButtonDisabled, setButtonDisabled] = useState<boolean>(false)
 
@@ -84,6 +108,10 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
 
     useEffect(() => {
         if (mountRef.current) {
+            if (typeof validation === 'undefined') {
+                setButtonDisabled(true)
+                return
+            }
             const isAllValid = validation.firstName
                 && validation.lastName
                 && validation.email
@@ -93,10 +121,11 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
                 && validation.dob
                 && validation.postalCode
                 && validation.ssn
+
+            console.log(validation)
             setButtonDisabled(!isAllValid)
             return
         }
-
         mountRef.current = true
     }, [validation])
 
@@ -116,7 +145,7 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
                 label="First name"
                 value={firstName}
                 variant="outlined"
-                error={!validation.firstName}
+                error={typeof validation?.firstName !== 'undefined' && !validation?.firstName}
                 onChange={(it) => {
                     const value = it.target.value;
                     setFirstName(value)
@@ -133,7 +162,7 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
                 label="Last name"
                 variant="outlined"
                 value={lastName}
-                error={!validation.lastName}
+                error={typeof validation?.lastName !== 'undefined' && !validation?.lastName}
                 onChange={(it) => {
                     const value = it.target.value;
                     setLastName(value)
@@ -150,7 +179,7 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
                 label="Email"
                 variant="outlined"
                 value={email}
-                error={!validation.email}
+                error={typeof validation?.email !== 'undefined' && !validation?.email}
                 helperText={'john@doe.com'}
                 onChange={(it) => {
                     const value = it.target.value;
@@ -167,7 +196,7 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
                 id="address"
                 label="Address"
                 variant="outlined"
-                error={!validation.address}
+                error={typeof validation?.address !== 'undefined' && !validation?.address}
                 helperText={'99-99 33rd St'}
                 value={address}
                 onChange={(it) => {
@@ -184,7 +213,7 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
             <TextField
                 id="city"
                 label="City"
-                error={!validation.city}
+                error={typeof validation?.city !== 'undefined' && !validation?.city}
                 variant="outlined"
                 helperText={'New York'}
                 value={city}
@@ -202,7 +231,7 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
             <FormControl>
                 <InputLabel id="state-select-label">State</InputLabel>
                 <Select
-                    error={!validation.state}
+                    error={typeof validation?.state !== 'undefined' && !validation?.state}
                     variant={'outlined'}
                     labelId="state-select-label"
                     id="state-select"
@@ -219,14 +248,13 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
                         setState(it.target.value)
                     }}
                 >
-                    {statesMemo.map(it => (<MenuItem value={it}>{it}</MenuItem>))}
+                    {statesMemo.map(it => (<MenuItem key={it} value={it}>{it}</MenuItem>))}
                 </Select>
             </FormControl>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
                     label={'Date of birth'}
                     disableFuture={true}
-                    defaultValue={dayjs()}
                     value={dateOfBirth}
                     minDate={dayjs(MIN_DOB)}
                     onChange={(newValue) => {
@@ -240,7 +268,7 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
                     }}/>
             </LocalizationProvider>
             <TextField
-                error={!validation.postalCode}
+                error={typeof validation?.postalCode !== 'undefined' && !validation?.postalCode}
                 inputProps={{inputMode: 'numeric', pattern: POSTAL_CODE_REGEXP}}
                 id="zip"
                 label="Postal code"
@@ -258,25 +286,29 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
                     })
                 }}
             />
-            <TextField
-                error={!validation.ssn}
-                inputProps={{inputMode: 'numeric', pattern: SSN_REGEXP}}
-                id="ssn"
-                label="SSN"
-                variant="outlined"
-                helperText={'123456789'}
-                value={ssn}
-                onChange={(it) => {
-                    const value = it.target.value;
-                    setSsn(value)
-                    setValidation(state => {
-                        return {
-                            ...state,
-                            ssn: SSN_REGEXP.test(value),
-                        }
-                    })
-                }}
-            />
+            <FormControl>
+                <InputLabel htmlFor="ssn-input">SSN</InputLabel>
+                <OutlinedInput
+                    label={'SSN'}
+                    error={typeof validation?.ssn !== 'undefined' && !validation?.ssn}
+                    value={ssn}
+                    inputProps={{inputMode: 'numeric', pattern: `${SSN_REGEXP}`}}
+                    onChange={(it) => {
+                        const value = it.target.value;
+                        setSsn(value)
+                        setValidation(state => {
+                            return {
+                                ...state,
+                                ssn: SSN_REGEXP.test(value),
+                            }
+                        })
+                    }}
+                    name="ssn"
+                    id="ssn-input"
+                    inputComponent={SsnTextMask as any}
+                />
+                <FormHelperText>123-45-6789</FormHelperText>
+            </FormControl>
             <Button
                 disabled={isButtonDisabled}
                 onClick={() => {
@@ -288,10 +320,10 @@ const UserInfoForm: React.FC<UserInfoFormProps> = (props) => {
                         city,
                         state,
                         postalCode,
-                        dateOfBirth.format('YYYY-MM-DD'),
+                        dateOfBirth!!.format('YYYY-MM-DD'),
                         ssn
                     )
-                }} children={'Confirm'}></Button>
+                }} children={'Confirm'}/>
         </Box>
     )
 }
@@ -325,9 +357,7 @@ export const Payment = () => {
     }, [id, product])
 
     const handleSuccessTransaction = (transactionId: string) => {
-        alert(`Successfully created transaction with id ${transactionId}`)
-        setUserInfoFormOpen(false)
-        setBackdropOpen(false)
+        window.location.replace(`/transaction/${transactionId}/success`)
     }
 
     const handleSubmit = (
@@ -352,30 +382,31 @@ export const Payment = () => {
             postalCode,
             dateOfBirth,
             ssn
-        ).then(user => {
-            if (user.isFundingAttached) processAttached(id!!).then(transactionId => handleSuccessTransaction(transactionId))
-            else getLinkToken(user.id)
-                .then(token => {
-                    // @ts-ignore
-                    window.Plaid.create({
-                        token: token,
-                        onSuccess: (publicToken: string, metadata: Object) => {
-                            // @ts-ignore
-                            processNotAttached(user.id, publicToken, metadata.account_id, id)
-                                .then(transactionId => handleSuccessTransaction(transactionId))
-                                .catch((e) => {
-                                    console.log(e)
-                                    alert(`Failed to create transaction`)
-                                    setUserInfoFormOpen(false)
-                                    setBackdropOpen(false)
-                                })
-                        },
-                    }).open()
-                })
-        }).catch(e => {
-            alert("Something went wrong")
-            console.log(e)
-        })
+        )
+            .then(user => {
+                if (user.isFundingAttached) processAttached(id!!).then(transactionId => handleSuccessTransaction(transactionId))
+                else getLinkToken(user.id)
+                    .then(token => {
+                        // @ts-ignore
+                        window.Plaid.create({
+                            token: token,
+                            onSuccess: (publicToken: string, metadata: Object) => {
+                                // @ts-ignore
+                                processNotAttached(user.id, publicToken, metadata.account_id, id)
+                                    .then(transactionId => handleSuccessTransaction(transactionId))
+                                    .catch((e) => {
+                                        console.log(e)
+                                        alert(`Failed to create transaction`)
+                                        setUserInfoFormOpen(false)
+                                        setBackdropOpen(false)
+                                    })
+                            },
+                        }).open()
+                    })
+            })
+            .catch(e => {
+                window.location.replace(`/error?message=${e}`)
+            })
     }
 
     return (<>
@@ -411,7 +442,10 @@ export const Payment = () => {
                         onButtonClick={() => {
                             checkUser().then(r => {
                                 if (r) {
-                                    processAttached(id!!).then(transactionId => handleSuccessTransaction(transactionId))
+                                    setBackdropOpen(true)
+                                    processAttached(id!!)
+                                        .then(transactionId => handleSuccessTransaction(transactionId))
+                                        .finally(() => setBackdropOpen(false))
                                 } else {
                                     setUserInfoFormOpen(true)
                                 }

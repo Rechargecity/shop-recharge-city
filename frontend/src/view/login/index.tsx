@@ -66,7 +66,10 @@ export const Login = () => {
                                     login: login,
                                     password: password
                                 })
-                            }).catch(dispatch.auth.logout)
+                            }).catch((e) => {
+                                alert(e)
+                                dispatch.auth.logout()
+                            })
                         }}>
                         Login
                     </Button>

@@ -12,6 +12,8 @@ import {Login} from "./view/login";
 import {Forbidden} from "./view/forbidden";
 import {Register} from "./view/register";
 import {createTheme, ThemeProvider} from "@mui/material";
+import {Success} from "./view/success";
+import {Error} from "./view/error";
 
 const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
@@ -32,6 +34,10 @@ const router = createBrowserRouter([
         element: <Login/>
     },
     {
+        path: "/error",
+        element: <Error/>
+    },
+    {
         path: "/register",
         element: <Register/>
     },
@@ -41,11 +47,15 @@ const router = createBrowserRouter([
     },
     {
         path: "/payment/:id",
-        element: <Protected redirectTo={window.location.pathname}><Payment/></Protected>
+        element: <Protected><Payment/></Protected>
+    },
+    {
+        path: "/transaction/:transactionId/success",
+        element: <Protected><Success/></Protected>
     },
     {
         path: "/admin",
-        element: <Protected admin={true} redirectTo={'/admin'}><Admin/></Protected>
+        element: <Protected><Admin/></Protected>
     },
 ]);
 

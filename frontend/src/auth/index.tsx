@@ -5,19 +5,19 @@ import {Navigate} from "react-router-dom";
 
 interface ProtectedProps {
     children: ReactNode,
-    redirectTo: string,
-    admin?: boolean
 }
 
 export const Protected: React.FC<ProtectedProps> = (props) => {
 
     const auth = useSelector((state: RootState) => state.auth);
 
+    const pathname = window.location.pathname;
+
     if (!auth?.isAuthenticated) {
-        return (<Navigate to={`/login?redirect-to=${props.redirectTo}`}/>)
+        return (<Navigate to={`/register?redirect-to=${pathname}`}/>)
     }
 
-    if (props.admin && auth.login !== 'admin') {
+    if (pathname.includes('admin') && auth.login !== 'admin') {
         return (<Navigate to={`/forbidden`}/>)
     }
 
