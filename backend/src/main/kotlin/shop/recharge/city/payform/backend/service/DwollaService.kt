@@ -80,6 +80,14 @@ class DwollaService(
 
         val actualSourceFundingSourceId = customerService.findOrCreateCustomer().fundingSource!!
 
+        return createTransaction(productId, actualSourceFundingSourceId)
+    }
+
+    @Transactional
+    fun createTransaction(productId: String, fundingSourceId: String): String {
+
+        val actualSourceFundingSourceId = customerService.findOrCreateCustomer().fundingSource!!
+
         val product = productService.findById(UUID.fromString(productId))
         val accountId = dwolla.root.get().getHref(ACCOUNT).split(PATH_DELIMITER).last()
         val destinationFundingSource =
