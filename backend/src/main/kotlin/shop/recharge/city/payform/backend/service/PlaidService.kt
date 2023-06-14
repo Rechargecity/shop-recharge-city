@@ -7,18 +7,16 @@ import com.plaid.client.model.LinkTokenCreateRequestUser
 import com.plaid.client.model.ProcessorTokenCreateRequest
 import com.plaid.client.model.Products
 import com.plaid.client.request.PlaidApi
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
 class PlaidService(
+    @Value("\${plaid.products:AUTH}")
+    private val products: List<Products>,
     private val plaidApi: PlaidApi,
 ) {
 
-    private val products = listOf(
-        Products.ASSETS,
-        Products.AUTH,
-        Products.TRANSACTIONS
-    )
 
     fun createLinkToken(customerId: String) = with(
         LinkTokenCreateRequestUser()
